@@ -1,6 +1,7 @@
 # Vessel — Generative Olfactory
 
-The bottle *is* the data.
+[The bottle *is* the data.](https://xuanx1.github.io/parametric-olfa/Scent%20Vessel)
+<img width="1918" height="1031" alt="Screenshot 2026-06-11 131351" src="https://github.com/user-attachments/assets/57c8e26e-82da-476b-8eb3-a35d8ebaa354" />
 
 A perfumer's-formula → 3D-bottle design tool. Compose a fragrance on a
 formula sheet with olfactory families, note structure, concentration, character
