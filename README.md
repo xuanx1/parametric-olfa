@@ -61,12 +61,7 @@ The **Features** panel narrates these decisions live; hover a clause to highligh
   **PNG** (hi-res packshot), Export spec sheet.
 - **Drydown — evaporation** — scrub "hours worn": volatile top notes fade, base
   notes persist, and the juice darkens and drops in the bottle in real time.
-- **Tweaks** (toolbar toggle) — render quality, relief depth, Venetian
-  decoration, turntable speed, **camera** (hero / packshot / macro / top-down),
-  **surface** (sweep / marble / linen / concrete), backdrop tone.
 - **Shelf** — *Pin current* to snapshot a flacon and line several up to compare
   (persists in your browser).
 - **Spec sheet** — printable product-development page (formula, CMF, packaging
   carton, features). Print / Save-PDF from there.
-- **Tweaks** (toolbar toggle) — render quality, relief depth, Venetian
-  decoration intensity, turntable speed, backdrop.

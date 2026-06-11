@@ -702,25 +702,12 @@
     return h;
   }
 
-  // ------------------------------------------------------------- tweaks bridge
-  window.__svApplyTweaks = function (t) {
-    if (!sceneReady) { window.__svPendingTweaks = t; return; }
-    if (t.quality) window.SV.setQuality(t.quality.toLowerCase());
-    if (t.turntableSpeed != null) window.SV.setTurntableSpeed(t.turntableSpeed);
-    if (t.backdrop) window.SV.setBackdrop(t.backdrop);
-    if (t.reliefDepth != null && window.SV.setReliefScale) window.SV.setReliefScale(t.reliefDepth);
-    if (t.decor != null && window.SV.setDecor) window.SV.setDecor(t.decor);
-    if (t.camera && window.SV.setCamera) window.SV.setCamera({ 'Hero 3/4': 'hero', 'Packshot': 'packshot', 'Macro': 'macro', 'Top-down': 'top' }[t.camera] || 'hero');
-    if (t.surface && window.SV.setSurface) window.SV.setSurface(t.surface.toLowerCase());
-  };
-
   // ------------------------------------------------------------- boot
   function onSceneReady() {
     sceneReady = true;
     if (brand) window.SV.setBrand(brand);
     window.SV.setLabelPos(labelPos);
     window.SV.update(design);
-    if (window.__svPendingTweaks) window.__svApplyTweaks(window.__svPendingTweaks);
     // dismiss the loading page once the first bottle has painted
     requestAnimationFrame(() => setTimeout(() => {
       const ld = document.getElementById('sv-loading');
