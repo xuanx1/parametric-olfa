@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VESSEL — Generative Olfactory</title>
+<style>
+  :root {
+    --ink: #16150f;
+    --ink-2: #5c5a52;
+    --ink-3: #97948a;
+    --hair: #e0ded7;
+    --hair-2: #ecebe6;
+    --paper: #fbfaf8;
+    --bg: #f4f3f0;
+    --accent: #e8501a;
+    --mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+    --sans: 'Archivo', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--ink);
+    font-size: 13px;
+    overflow: hidden;
+  }
+  .mono { font-family: var(--mono); }
+  .app {
+    display: grid;
+    grid-template-rows: 54px 1fr;
+    height: 100vh;
+  }
+
+  /* ============================== header =============================== */
+  header.bar {
+    display: flex;
+    align-items: stretch;
+    border-bottom: 1px solid var(--ink);
+    background: var(--paper);
+  }
+  .brand {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 0 20px;
+    border-right: 1px solid var(--hair);
+    align-self: stretch;
+    align-items: center;
+  }
+  .brand-name {
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    font-size: 14px;
+  }
+  .brand-sub {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--ink-3);
+    letter-spacing: 0.06em;
+  }
+  .bar-name {
+    display: flex;
+    align-items: center;
+    padding: 0 18px;
+    font-weight: 600;
+    font-size: 13px;
+    border-right: 1px solid var(--hair);
+    min-width: 150px;
+  }
+  #stats {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    padding: 0 18px;
+    flex: 1;
+    overflow: hidden;
+  }
+  .stat { display: inline-flex; flex-direction: column; gap: 1px; }
+  .stat-k { font-family: var(--mono); font-size: 8.5px; letter-spacing: 0.12em; color: var(--ink-3); }
+  .stat-v { font-size: 11.5px; font-weight: 500; white-space: nowrap; }
+  .stat-in {
+    font-family: var(--mono); font-size: 11.5px; font-weight: 500; color: var(--ink);
+    width: 3.2ch; border: none; border-bottom: 1px dotted var(--hair); background: none;
+    padding: 0 1px; text-align: center; -moz-appearance: textfield; cursor: text;
+  }
+  .stat-in::-webkit-outer-spin-button, .stat-in::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .stat-in:hover { border-bottom-color: var(--ink-3); }
+  .stat-in:focus { outline: none; border-bottom-color: var(--accent); background: #fdf3ee; }
+  .bar-actions { display: flex; align-items: stretch; }
+  .bar-btn {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    background: none;
+    border: none;
+    border-left: 1px solid var(--hair);
+    padding: 0 16px;
+    cursor: pointer;
+    color: var(--ink-2);
+    transition: background 0.15s, color 0.15s;
+  }
+  .bar-btn:hover { background: var(--hair-2); color: var(--ink); }
+  .bar-btn.on { color: var(--accent); }
+  .bar-btn.primary { background: var(--ink); color: var(--paper); }
+  .bar-btn.primary:hover { background: #2e2c24; }
+
+  /* ============================== layout ================================ */
+  main {
+    display: grid;
+    grid-template-columns: 302px 1fr 318px;
+    min-height: 0;
+  }
+  aside {
+    background: var(--paper);
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+  aside.left { border-right: 1px solid var(--hair); }
+  aside.right { border-left: 1px solid var(--hair); }
+
+  .panel-head {
+    padding: 14px 18px 10px;
+    border-bottom: 1px solid var(--hair);
+    position: sticky;
+    top: 0;
+    background: var(--paper);
+    z-index: 2;
+  }
+  .panel-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    color: var(--ink);
+  }
+  .panel-sub {
+    font-size: 11px;
+    color: var(--ink-3);
+    margin-top: 3px;
+  }
+  .sec {
+    padding: 14px 18px 16px;
+    border-bottom: 1px solid var(--hair-2);
+  }
+  .sec-title {
+    font-family: var(--mono);
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    color: var(--ink-3);
+    margin-bottom: 10px;
+  }
+
+  /* ---- presets */
+  #presets { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .preset-btn {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    text-align: left;
+    background: none;
+    border: 1px solid var(--hair);
+    padding: 8px 10px;
+    cursor: pointer;
+    font-family: var(--sans);
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .preset-btn:hover { border-color: var(--ink-3); }
+  .preset-btn.on { border-color: var(--ink); background: var(--hair-2); }
+  .preset-name { font-size: 11.5px; font-weight: 600; }
+  .preset-sub { font-size: 10px; color: var(--ink-3); }
+
+  /* ---- sliders */
+  .sl-row { margin-bottom: 9px; }
+  .sl-row:last-child { margin-bottom: 0; }
+  .sl-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 3px; }
+  .sl-label { font-size: 11.5px; color: var(--ink-2); }
+  .sl-val { font-size: 10px; color: var(--ink); font-weight: 500; }
+  .sl-input {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 14px;
+    background: transparent;
+    cursor: pointer;
+    display: block;
+  }
+  .sl-input::-webkit-slider-runnable-track { height: 2px; background: var(--hair); }
+  .sl-input::-moz-range-track { height: 2px; background: var(--hair); }
+  .sl-input::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 11px; height: 11px;
+    margin-top: -4.5px;
+    background: var(--sw, var(--ink));
+    border: 1.5px solid var(--ink);
+    border-radius: 0;
+  }
+  .sl-input::-moz-range-thumb {
+    width: 8px; height: 8px;
+    background: var(--sw, var(--ink));
+    border: 1.5px solid var(--ink);
+    border-radius: 0;
+  }
+
+  /* ---- concentration segmented */
+  #conc-seg { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--hair); }
+  .seg-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+    padding: 7px 2px 6px;
+    background: none;
+    border: none;
+    border-right: 1px solid var(--hair);
+    cursor: pointer;
+    font-family: var(--sans);
+    font-size: 10.5px;
+    font-weight: 600;
+    color: var(--ink-2);
+    transition: background 0.15s;
+  }
+  .seg-btn:last-child { border-right: none; }
+  .seg-btn:hover { background: var(--hair-2); }
+  .seg-btn.on { background: var(--ink); color: var(--paper); }
+  .seg-btn.on .seg-pct { color: #b8b5aa; }
+  .seg-pct { font-size: 8px; color: var(--ink-3); letter-spacing: 0.04em; }
+
+  /* ============================== stage ================================ */
+  section.center {
+    display: grid;
+    grid-template-rows: 1fr auto;
+    min-width: 0;
+    min-height: 0;
+  }
+  #stage { position: relative; min-height: 0; overflow: hidden; }
+  #stage canvas { display: block; }
+  .stage-tag {
+    position: absolute;
+    top: 14px;
+    left: 18px;
+    font-family: var(--mono);
+    font-size: 9.5px;
+    letter-spacing: 0.14em;
+    color: var(--ink-3);
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  /* ---- maison / label input */
+  #brand-input {
+    width: 100%;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    padding: 8px 10px;
+    border: 1px solid var(--hair);
+    background: var(--bg);
+    color: var(--ink);
+    outline: none;
+    text-transform: uppercase;
+  }
+  #brand-input:focus { border-color: var(--ink); background: var(--paper); }
+  #brand-input::placeholder { color: var(--ink-3); text-transform: none; letter-spacing: 0; }
+  #label-controls { margin-top: 12px; }
+  .lc-controls { display: inline-flex; align-items: center; gap: 6px; }
+  .lc-auto {
+    font-family: var(--mono); font-size: 9px; letter-spacing: 0.06em;
+    border: 1px solid var(--hair); background: none; color: var(--ink-3);
+    padding: 2px 7px; cursor: pointer;
+  }
+  .lc-auto:hover { border-color: var(--ink-3); color: var(--ink-2); }
+  .lc-auto.on { border-color: var(--ink); background: var(--ink); color: var(--paper); }
+  .lc-swatch {
+    position: relative; width: 22px; height: 16px; display: inline-block;
+    border: 1px solid var(--hair); cursor: pointer;
+    background: linear-gradient(135deg, #e0b400, #1f7a8a, #b23a6e);
+  }
+  .lc-pick { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; border: none; padding: 0; cursor: pointer; }
+
+  /* ---- compare shelf */
+  #shelf-wrap {
+    border-top: 1px solid var(--hair);
+    background: var(--paper);
+    padding: 8px 14px 10px;
+  }
+  .shelf-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .shelf-pin {
+    font-family: var(--mono);
+    font-size: 9.5px;
+    letter-spacing: 0.08em;
+    background: none;
+    border: 1px solid var(--hair);
+    padding: 5px 10px;
+    cursor: pointer;
+    color: var(--ink-2);
+  }
+  .shelf-pin:hover { border-color: var(--ink); color: var(--ink); }
+  #shelf { display: flex; gap: 8px; overflow-x: auto; min-height: 78px; padding-bottom: 2px; }
+  #shelf:empty::after {
+    content: 'Pin a flacon to compare it here.';
+    font-size: 11px; color: var(--ink-3); align-self: center;
+  }
+  .shelf-item {
+    flex: 0 0 auto;
+    width: 64px;
+    cursor: pointer;
+    border: 1px solid var(--hair);
+    background: var(--bg);
+    position: relative;
+    transition: border-color 0.15s;
+  }
+  .shelf-item:hover { border-color: var(--ink-2); }
+  .shelf-item img { width: 100%; height: 56px; object-fit: cover; display: block; }
+  .shelf-cap { font-family: var(--mono); font-size: 7.5px; letter-spacing: 0.04em; padding: 3px 4px; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .shelf-del {
+    position: absolute; top: 2px; right: 2px;
+    width: 14px; height: 14px; line-height: 12px; text-align: center;
+    background: rgba(22,21,15,0.7); color: #fff; font-size: 11px;
+    border: none; cursor: pointer; opacity: 0; transition: opacity 0.15s;
+  }
+  .shelf-item:hover .shelf-del { opacity: 1; }
+
+  /* ---- rationale strip */
+  #rationale-wrap {
+    border-top: 1px solid var(--ink);
+    background: var(--paper);
+  }
+  .rat-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 10px 18px 0;
+  }
+  .rat-head .panel-title::before {
+    content: '';
+    display: inline-block;
+    width: 7px; height: 7px;
+    background: var(--accent);
+    margin-right: 8px;
+  }
+  .rat-hint { font-family: var(--mono); font-size: 9px; color: var(--ink-3); letter-spacing: 0.08em; }
+  #rationale {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+    padding: 8px 6px 12px;
+  }
+  .rat-item {
+    padding: 6px 12px;
+    border-right: 1px solid var(--hair-2);
+    cursor: default;
+    transition: background 0.15s;
+  }
+  .rat-item:last-child { border-right: none; }
+  .rat-item.hot { background: #fdf3ee; }
+  .rat-title {
+    font-family: var(--mono);
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin-bottom: 4px;
+    transition: color 0.15s;
+  }
+  .rat-item.hot .rat-title { color: var(--accent); }
+  .rat-text { font-size: 11px; line-height: 1.45; color: var(--ink-2); text-wrap: pretty; }
+  .rat-item.hot .rat-text { color: var(--ink); }
+
+  /* ============================== CMF board ============================ */
+  #chips { display: flex; flex-direction: column; gap: 7px; }
+  .chip { display: flex; gap: 10px; align-items: center; }
+  .chip-swatch {
+    width: 44px; height: 34px;
+    border: 1px solid rgba(22,21,15,0.18);
+    flex-shrink: 0;
+  }
+  .chip-meta { display: flex; flex-direction: column; gap: 0; min-width: 0; }
+  .chip-role { font-family: var(--mono); font-size: 8px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-3); }
+  .chip-name { font-size: 12px; font-weight: 600; }
+  .chip-hex { font-size: 9.5px; color: var(--ink-2); }
+  /* editable CMF */
+  .chip-swatch { position: relative; cursor: pointer; }
+  .chip-swatch::after { content: ''; position: absolute; right: 2px; bottom: 2px; width: 0; height: 0; border-style: solid; border-width: 0 0 7px 7px; border-color: transparent transparent rgba(255,255,255,0.7) transparent; }
+  .chip-pick { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; border: none; padding: 0; }
+  [data-edit] { cursor: text; border-bottom: 1px dotted transparent; transition: border-color 0.15s, background 0.15s; outline: none; }
+  [data-edit]:hover { border-bottom-color: var(--hair); }
+  [data-edit]:focus { border-bottom-color: var(--accent); background: #fdf3ee; }
+  .cmf-edited { font-family: var(--mono); font-size: 8.5px; letter-spacing: 0.08em; color: var(--accent); opacity: 0; transition: opacity 0.15s; }
+  .cmf-edited.on { opacity: 1; }
+  .cmf-reset {
+    margin-top: 8px; font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.06em;
+    background: none; border: 1px solid var(--hair); padding: 5px 10px; cursor: pointer; color: var(--ink-2);
+    display: none;
+  }
+  .cmf-reset.on { display: inline-block; }
+  .cmf-reset:hover { border-color: var(--ink); color: var(--ink); }
+
+  .mat-row { display: flex; gap: 10px; margin-bottom: 11px; }
+  #body-select { margin-bottom: 14px; }
+  .bs-label { font-size: 8.5px; letter-spacing: 0.1em; color: var(--ink-3); margin-bottom: 6px; }
+  .bs-opts { display: flex; flex-wrap: wrap; gap: 4px; }
+  .bs-btn {
+    font-family: var(--mono); font-size: 9px; letter-spacing: 0.04em;
+    border: 1px solid var(--hair); background: none; color: var(--ink-2);
+    padding: 3px 7px; cursor: pointer;
+  }
+  .bs-btn:hover { border-color: var(--ink-3); color: var(--ink); }
+  .bs-btn.on { border-color: var(--ink); background: var(--ink); color: var(--paper); }
+  .wear-status { font-size: 9.5px; color: var(--ink-3); margin-top: 7px; letter-spacing: 0.04em; min-height: 12px; }
+  .studio-row { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 9px; }
+  .studio-row:last-child { margin-bottom: 0; }
+  .studio-k { font-size: 8.5px; letter-spacing: 0.1em; color: var(--ink-3); width: 52px; flex-shrink: 0; padding-top: 4px; }
+  .studio-opts { display: flex; flex-wrap: wrap; gap: 4px; }
+  .studio-opts .bs-btn { font-family: var(--mono); font-size: 9px; letter-spacing: 0.04em; border: 1px solid var(--hair); background: none; color: var(--ink-2); padding: 3px 7px; cursor: pointer; }
+  .studio-opts .bs-btn:hover { border-color: var(--ink-3); color: var(--ink); }
+  .studio-opts .bs-btn.on { border-color: var(--ink); background: var(--ink); color: var(--paper); }
+  .mat-row:last-child { margin-bottom: 0; }
+  .mat-k { font-size: 8.5px; letter-spacing: 0.1em; color: var(--ink-3); width: 58px; flex-shrink: 0; padding-top: 2px; }
+  .mat-body { display: flex; flex-direction: column; gap: 1px; }
+  .mat-v { font-size: 12px; font-weight: 600; }
+  .mat-why { font-size: 10.5px; color: var(--ink-3); line-height: 1.4; text-wrap: pretty; }
+
+  .fin-row { display: grid; grid-template-columns: 52px 92px 1fr; gap: 8px; align-items: baseline; margin-bottom: 8px; }
+  .fin-row:last-child { margin-bottom: 0; }
+  .fin-target { font-size: 8.5px; letter-spacing: 0.1em; color: var(--ink-3); }
+  .fin-name { font-size: 11.5px; font-weight: 600; }
+  .fin-why { font-size: 10px; color: var(--ink-3); line-height: 1.4; }
+
+  /* ============================== spec sheet =========================== */
+  #sheet-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(22, 21, 15, 0.45);
+    display: none;
+    align-items: flex-start;
+    justify-content: center;
+    overflow-y: auto;
+    padding: 32px 20px;
+    z-index: 50;
+  }
+  #sheet-overlay.open { display: flex; }
+  .sheet-frame { position: relative; }
+  .sheet-tools {
+    position: sticky;
+    top: 0;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-bottom: 10px;
+    z-index: 2;
+  }
+  .sheet-tools button {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    padding: 7px 14px;
+    border: 1px solid var(--paper);
+    background: var(--ink);
+    color: var(--paper);
+    cursor: pointer;
+  }
+  .sheet-tools button:hover { background: #33312a; }
+  #sheet {
+    width: 794px;
+    min-height: 1000px;
+    background: #ffffff;
+    padding: 46px 52px;
+    box-shadow: 0 24px 70px rgba(22, 21, 15, 0.35);
+  }
+  .sh-head { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid var(--ink); padding-bottom: 14px; }
+  .sh-eyebrow { font-size: 9px; letter-spacing: 0.2em; color: var(--ink-3); margin-bottom: 6px; }
+  .sh-name { font-size: 30px; font-weight: 700; letter-spacing: -0.01em; }
+  .sh-meta { font-size: 9.5px; text-align: right; color: var(--ink-2); line-height: 1.7; letter-spacing: 0.06em; }
+  .sh-grid { display: grid; grid-template-columns: 300px 1fr; gap: 28px; padding: 22px 0; border-bottom: 1px solid var(--hair); }
+  .sh-photo img { width: 100%; display: block; border: 1px solid var(--hair); }
+  .sh-dims { font-size: 8.5px; letter-spacing: 0.1em; color: var(--ink-3); margin-top: 8px; }
+  .sh-sec { margin-bottom: 20px; }
+  .sh-sec:last-child { margin-bottom: 0; }
+  .sh-sec-title { font-size: 9px; font-weight: 600; letter-spacing: 0.18em; color: var(--ink-3); border-bottom: 1px solid var(--hair); padding-bottom: 5px; margin-bottom: 10px; }
+  .sh-fam { display: grid; grid-template-columns: 110px 1fr 36px; gap: 10px; align-items: center; margin-bottom: 5px; font-size: 11px; }
+  .sh-fam-bar { height: 9px; background: var(--hair-2); display: block; }
+  .sh-fam-bar span { display: block; height: 100%; }
+  .sh-fam-pct { font-size: 9.5px; text-align: right; }
+  .sh-struct { font-size: 10px; line-height: 1.9; letter-spacing: 0.05em; color: var(--ink-2); }
+  .sh-chips { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+  .sh-chip { display: flex; flex-direction: column; gap: 2px; font-size: 9.5px; font-weight: 600; width: 74px; }
+  .sh-chip .mono { font-weight: 400; font-size: 8.5px; color: var(--ink-3); }
+  .sh-chip-sw { height: 40px; border: 1px solid rgba(22,21,15,0.18); }
+  .sh-mats { display: grid; grid-template-columns: 1fr 1fr; gap: 7px 18px; }
+  .sh-mat { display: flex; flex-direction: column; gap: 1px; font-size: 11px; }
+  .sh-mat .mono { font-size: 8px; letter-spacing: 0.14em; color: var(--ink-3); }
+  .sh-rationale { padding-top: 20px; }
+  .sh-rationale p { font-size: 10.5px; line-height: 1.55; color: var(--ink-2); margin-bottom: 7px; text-wrap: pretty; }
+  .sh-rationale strong { color: var(--ink); }
+  /* packaging carton */
+  .sh-carton { display: flex; gap: 24px; align-items: center; padding-top: 4px; }
+  .ct-svg { width: 156px; height: auto; flex: 0 0 auto; filter: drop-shadow(7px 11px 15px rgba(22,21,15,0.2)); overflow: visible; }
+  .ct-meta { font-size: 8.5px; letter-spacing: 0.1em; color: var(--ink-3); line-height: 1.9; }
+  #packaging .sh-carton { gap: 14px; padding-top: 8px; }
+  #packaging .ct-svg { width: 118px; }
+  #packaging .ct-meta { font-size: 8px; line-height: 1.75; }
+  .sh-foot { border-top: 2px solid var(--ink); margin-top: 24px; padding-top: 10px; font-size: 8.5px; letter-spacing: 0.16em; color: var(--ink-3); }
+
+  /* ============================== loading page ======================== */
+  #sv-loading {
+    position: absolute; inset: 0; z-index: 60;
+    background: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+    transition: opacity 0.5s ease;
+  }
+  #sv-loading.hidden { opacity: 0; pointer-events: none; }
+  .ld-card { width: 280px; display: flex; flex-direction: column; align-items: center; }
+  .ld-rule {
+    width: 100%; display: flex; justify-content: space-between;
+    border-top: 1px solid var(--hair); padding-top: 7px; margin-bottom: 26px;
+  }
+  .ld-rule .mono { font-size: 9px; letter-spacing: 0.18em; color: var(--ink-3); }
+  .ld-flacon { width: 150px; height: 120px; display: block; }
+  .ld-flacon .ld-fill { animation: ld-rise 2.1s ease-in-out infinite; transform-box: fill-box; transform-origin: bottom; }
+  @keyframes ld-rise { 0%, 100% { transform: scaleY(0.55); opacity: 0.10; } 50% { transform: scaleY(1); opacity: 0.22; } }
+  .ld-word { margin-top: 18px; font-weight: 700; font-size: 22px; letter-spacing: 0.34em; padding-left: 0.34em; color: var(--ink); }
+  .ld-sub { margin-top: 5px; font-size: 9px; letter-spacing: 0.26em; color: var(--ink-3); }
+  .ld-bar {
+    margin-top: 22px; width: 180px; height: 2px; background: var(--hair);
+    overflow: hidden; position: relative;
+  }
+  .ld-bar span {
+    position: absolute; top: 0; left: 0; height: 100%; width: 40%;
+    background: var(--accent); animation: ld-slide 1.3s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+  }
+  @keyframes ld-slide { 0% { left: -40%; } 100% { left: 100%; } }
+  .ld-status { margin-top: 12px; font-size: 9px; letter-spacing: 0.16em; color: var(--ink-3); }
+  @media (prefers-reduced-motion: reduce) {
+    .ld-flacon .ld-fill, .ld-bar span { animation: none; }
+  }
+
+  @media print {
+    body { overflow: visible; }
+    .app, .sheet-tools { display: none !important; }
+    #sheet-overlay { display: block !important; position: static; background: none; padding: 0; overflow: visible; }
+    #sheet { box-shadow: none; width: auto; min-height: 0; padding: 24px 8px; }
+    @page { size: A4 portrait; margin: 14mm; }
+  }
+</style>
+</head>
+<body>
+  <template id="__bundler_thumbnail">
+    <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+      <rect width="120" height="120" fill="#f4f3f0"/>
+    </svg>
+  </template>
+  <div class="app" data-screen-label="Scent Vessel studio">
+    <div id="sv-loading" aria-hidden="true">
+      <div class="ld-card">
+        <div class="ld-rule"><span class="mono">FIG. 01</span><span class="mono">VESSEL</span></div>
+        <svg class="ld-flacon" viewBox="0 0 120 96" xmlns="http://www.w3.org/2000/svg">
+          <g fill="none" stroke="#16150f" stroke-width="1.4" stroke-linejoin="round">
+            <path d="M54 8 L66 8 L69 14 L60 18 L51 14 Z" fill="#e6e3db"/>
+            <rect x="56.5" y="18" width="7" height="2.6" fill="#e6e3db"/>
+            <path d="M50 23 Q49 27 49 34 L49 84 Q49 88 53 88 L67 88 Q71 88 71 84 L71 34 Q71 27 70 23 Q66 21 60 21 Q54 21 50 23 Z" fill="#eceee9"/>
+          </g>
+          <g stroke="#b9c0bb" stroke-width="0.7">
+            <line x1="54" y1="26" x2="54" y2="85"/><line x1="58" y1="25" x2="58" y2="86"/>
+            <line x1="62" y1="25" x2="62" y2="86"/><line x1="66" y1="26" x2="66" y2="85"/>
+          </g>
+          <rect class="ld-fill" x="49.6" y="48" width="20.8" height="39" fill="#e8501a" opacity="0.16"/>
+          <rect x="53" y="58" width="14" height="2.4" fill="#e8501a"/>
+        </svg>
+        <div class="ld-word">VESSEL</div>
+        <div class="ld-sub mono">GENERATIVE OLFACTORY</div>
+        <div class="ld-bar"><span></span></div>
+        <div class="ld-status mono">COMPUTING FLACON…</div>
+      </div>
+    </div>
+    <header class="bar">
+      <div class="brand">
+        <span class="brand-name">VESSEL</span>
+        <span class="brand-sub">Generative Olfactory</span>
+      </div>
+      <div class="bar-name" id="stat-name">—</div>
+      <div id="stats"></div>
+      <div class="bar-actions">
+        <button class="bar-btn" id="btn-random">Randomise</button>
+        <button class="bar-btn" id="btn-spray">Atomise</button>
+        <button class="bar-btn" id="btn-cap"><span>Lift cap</span></button>
+        <button class="bar-btn" id="btn-turntable">Turntable</button>
+        <button class="bar-btn" id="btn-record">Record</button>
+        <button class="bar-btn" id="btn-save">Save</button>
+        <button class="bar-btn" id="btn-load">Load</button>
+        <button class="bar-btn" id="btn-share">Share</button>
+        <button class="bar-btn" id="btn-png">PNG</button>
+        <input type="file" id="file-load" accept=".vessel,.json,.html,application/json,text/html" style="display:none">
+        <button class="bar-btn primary" id="btn-export">Export spec sheet</button>
+      </div>
+    </header>
+    <main>
+      <aside class="left" data-screen-label="Formula sheet">
+        <div class="panel-head">
+          <div class="panel-title">FORMULA SHEET</div>
+          <div class="panel-sub">The composition computes the bottle.</div>
+        </div>
+        <div class="sec">
+          <div class="sec-title">PRESET FORMULAS</div>
+          <div id="presets"></div>
+        </div>
+        <div class="sec">
+          <div class="sec-title">MAISON · LABEL ENGRAVING</div>
+          <input id="brand-input" type="text" maxlength="18" placeholder="Name on the bottle" autocomplete="off">
+          <div id="label-controls"></div>
+        </div>
+        <div class="sec">
+          <div class="sec-title">OLFACTORY PYRAMID — FAMILY %</div>
+          <div id="family-sliders"></div>
+        </div>
+        <div class="sec">
+          <div class="sec-title">STRUCTURE — NOTE WEIGHTING</div>
+          <div id="structure-sliders"></div>
+        </div>
+        <div class="sec">
+          <div class="sec-title">CONCENTRATION</div>
+          <div id="conc-seg"></div>
+        </div>
+        <div class="sec">
+          <div class="sec-title">CHARACTER</div>
+          <div id="char-sliders"></div>
+        </div>
+        <div class="sec">
+          <div class="sec-title">STUDIO</div>
+          <div class="studio-row"><span class="studio-k mono">CAMERA</span><div id="camera-presets" class="studio-opts"></div></div>
+        </div>
+      </aside>
+
+      <section class="center" data-screen-label="3D stage">
+        <div id="stage">
+          <div class="stage-tag">FIG. 01 — COMPUTED FLACON, STUDIO CONDITIONS</div>
+        </div>
+        <div id="rationale-wrap" data-screen-label="Features">
+          <div class="rat-head">
+            <div class="panel-title">FEATURES</div>
+            <div class="rat-hint">HOVER A CLAUSE TO LOCATE IT ON THE BOTTLE</div>
+          </div>
+          <div id="rationale"></div>
+        </div>
+        <div id="shelf-wrap" data-screen-label="Compare shelf">
+          <div class="shelf-head">
+            <div class="panel-title">SHELF</div>
+            <button id="btn-pin" class="shelf-pin">+ Pin current</button>
+          </div>
+          <div id="shelf"></div>
+        </div>
+      </section>
+
+      <aside class="right" data-screen-label="CMF board">
+        <div class="panel-head">
+          <div class="panel-title">CMF BOARD <span id="cmf-edited" class="cmf-edited">· edited</span></div>
+          <div class="panel-sub">Colour · Material · Finish — derived, <em>click any value to fine-tune</em>.</div>
+          <button id="cmf-reset" class="cmf-reset">Reset to derived</button>
+        </div>
+        <div class="sec">
+          <div class="sec-title">COLOUR — DERIVED CHIPS</div>
+          <div id="chips"></div>
+        </div>
+        <div class="sec">
+          <div class="sec-title">MATERIAL CALLOUTS</div>
+          <div id="body-select"></div>
+          <div id="materials"></div>
+        </div>
+        <div class="sec">
+          <div class="sec-title">FINISH SPEC</div>
+          <div id="finish"></div>
+        </div>
+        <div class="sec">
+          <div class="sec-title">PACKAGING — FOLDING CARTON</div>
+          <div id="packaging"></div>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <div id="sheet-overlay" data-screen-label="Spec sheet">
+    <div class="sheet-frame">
+      <div class="sheet-tools">
+        <button id="sheet-print">PRINT / SAVE PDF</button>
+        <button id="sheet-close">CLOSE</button>
+      </div>
+      <div id="sheet"></div>
+    </div>
+  </div>
+
+  <script src="sv-mapping.js?v=11"></script>
+  <script src="sv-ui.js?v=11"></script>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.161.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.161.0/examples/jsm/"
+    }
+  }
+  </script>
+  <script type="module" src="sv-scene.js?v=11"></script>
+</body>
+</html>
